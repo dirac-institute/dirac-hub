@@ -1,0 +1,60 @@
+{{ if .Values.efs.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-root
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: {{ $.Values.efs.efsId }}.efs.{{ $.Values.efs.region | default "us-west-2" }}.amazonaws.com
+    path: "/"
+  persistentVolumeReclaimPolicy: Delete
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: nfs-root
+spec:
+  volumeName: nfs-root
+  storageClassName: ""
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Mi
+---
+{{ range $folder, $options := .Values.efs.folders }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $options.pvcName }}
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: {{ $.Values.efs.efsId }}.efs.{{ $.Values.efs.region | default "us-west-2" }}.amazonaws.com
+    path: "/{{ $.Values.efs.subPath }}/{{ $options.subPath }}"
+  persistentVolumeReclaimPolicy: Delete
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ $options.pvcName }}
+spec:
+  volumeName: {{ $options.pvcName }}
+  storageClassName: ""
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Mi
+---
+{{ end }}
+{{ end }}
+
+

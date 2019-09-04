@@ -1,0 +1,9 @@
+# File: proxy.yaml
+# Helm:
+# - jupyterhub.proxy
+# Manages the proxy deployment of JupyterHub
+
+jupyterhub:
+  proxy:
+    nodeSelector:
+      nodegroup-type: management

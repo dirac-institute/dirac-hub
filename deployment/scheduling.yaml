@@ -1,0 +1,18 @@
+# file: scheduling.yaml
+# Helm:
+# - jupyterhub.cull
+# Contains configurations for pod scheduling on the cluster
+jupyterhub:
+  cull:
+    enabled: false
+  scheduling:
+    podPriority:
+      enabled: true
+    userPlaceholder:
+      replicas: 1
+    userScheduler:
+      nodeSelector:
+        nodegroup-type: management
+    userPods:
+      nodeAffinity:
+        matchNodePurpose: require

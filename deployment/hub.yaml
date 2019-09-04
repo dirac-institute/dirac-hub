@@ -1,0 +1,44 @@
+# file: hub.yaml
+# Helm: 
+# - jupyterhub.hub
+# Contains configurations of the hub itself
+jupyterhub:
+  hub:
+    nodeSelector:
+      nodegroup-type: management
+    extraConfig:
+      # jupyterlab: |
+        # c.Spawner.cmd = ['jupyter-labhub']
+      timeout: |
+        c.Spawner.http_timeout = 600
+      debug: |
+        c.Spawner.args.append("--debug")
+      auth: |
+        import oauthenticator
+        from tornado import gen
+
+        class MyGitHubAuth(oauthenticator.github.GitHubOAuthenticator):
+          @gen.coroutine
+          def authenticate(self, handler, data=None):
+            userdict = yield super().authenticate(handler, data)
+            return userdict
+
+          @gen.coroutine
+          def pre_spawn_start(self, user, spawner):
+              """Pass upstream_token to spawner via environment variable"""
+              auth_state = yield user.get_auth_state()
+              if not auth_state:
+                  # auth_state not enabled
+                  return
+              spawner.environment["NB_UID"] = str(auth_state["github_user"]["id"])
+              spawner.environment["NB_USER"] = str(auth_state["github_user"]["login"])
+              spawner.uid = 0
+              spawner.args.append("--allow-root")
+
+        c.JupyterHub.authenticator_class = MyGitHubAuth
+        c.NotebookApp.allow_root = True
+        c.Authenticator.enable_auth_state = True
+        import os 
+        #, secrets
+        os.environ["JUPYTERHUB_CRYPT_KEY"] = "997119693680e62bfa18131a56d07d23015213619087e2e8475e427dd3a4555f"
+        # os.environ["JUPYTERHUB_CRYPT_KEY"] = secrets.token_hex(32)

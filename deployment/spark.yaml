@@ -1,0 +1,80 @@
+# File: spark.yaml
+# Helm:
+# - spark
+#
+spark:
+  image:
+    name: "808034228930.dkr.ecr.us-west-2.amazonaws.com/jupyter-axs"
+    tag: "demo-1567499600"
+  start-scripts:
+    spark-conf.sh: |
+      # Automatically set JAVA_HOME environment variable
+      export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+      export SPARK_CONF_DIR=$SPARK_HOME/conf
+      
+      echo "Setting Spark defaults"
+      conf_file=$SPARK_CONF_DIR/spark-defaults.conf
+      if [[ "$CMD_TYPE" == "notebook" ]]; then
+          echo "spark.driver.host=$(hostname -i)" >> $conf_file
+          echo "spark.ui.proxyBase=${JUPYTERHUB_SERVICE_PREFIX}proxy/4040" >> $conf_file
+          export SPARK_PUBLIC_DNS="${PUBLIC_URL}${JUPYTERHUB_SERVICE_PREFIX}proxy/4040/jobs/"
+      fi
+
+      prefix=spark.executorEnv
+      if [ -n "${CHOWN_HOME}" ]; then
+          echo "${prefix}.CHOWN_HOME ${CHOWN_HOME}" >> $conf_file
+      fi
+      if [ -n "${CHOWN_HOME_OPTS}" ]; then
+          echo "${prefix}.CHOWN_HOME_OPTS ${CHOWN_HOME_OPTS}" >> $conf_file
+      fi
+      if [ -n "${CHOWN_EXTRA}" ]; then
+          echo "${prefix}.CHOWN_EXTRA ${CHOWN_EXTRA}" >> $conf_file
+      fi
+      if [ -n "${CHOWN_EXTRA_OPTS}" ]; then
+          echo "${prefix}.CHOWN_EXTRA_OPTS ${CHOWN_EXTRA_OPTS}" >> $conf_file
+      fi
+      if [ -n "${NB_USER}" ]; then
+          echo "${prefix}.NB_USER ${NB_USER}" >> $conf_file
+          echo "spark.kubernetes.executor.podNamePrefix ${NB_USER}-spark" >> $conf_file
+          echo "spark.kubernetes.driver.pod.name jupyter-${NB_USER}" >> $conf_file
+      fi
+      if [ -n "${NB_UID}" ]; then
+          echo "${prefix}.NB_UID ${NB_UID}" >> $conf_file
+      fi
+      if [ -n "${SPARK_EXTERNAL_CONF_DIR}" ]; then
+          echo "${prefix}.SPARK_EXTERNAL_CONF_DIR ${SPARK_EXTERNAL_CONF_DIR}" >> $conf_file
+      fi
+  
+  static-conf:
+    s3.conf: |
+      # s3 access
+      spark.hadoop.fs.s3a.access.key=AKIAJEZXGNGXRR35SEXA
+      spark.hadoop.fs.s3a.secret.key=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
+      spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+    k8s.conf: |
+      # kubernetes options
+      spark.submit.deployMode=client
+      spark.master=k8s://https://kubernetes.default.svc:443
+      spark.kubernetes.node.selector.spark.apache.org/node-purpose=workers
+    scheduler.conf: |
+      # scheduling options (batch size, time out)
+      spark.kubernetes.allocation.batch.size=100
+      spark.scheduler.maxRegisteredResourcesWaitingTime=600s
+      spark.scheduler.minRegisteredResourcesRatio=1.0
+    executor.conf: |
+      # options for the executor pods
+      spark.executor.memory=3500m
+      spark.kubernetes.executor.request.cores=0.945
+      spark.kubernetes.executor.limit.cores=1.0
+    storage.conf: |
+      # storage and volume options
+      spark.kubernetes.executor.volumes.persistentVolumeClaim.config.mount.path=/etc/config/spark
+      spark.kubernetes.executor.volumes.persistentVolumeClaim.config.options.claimName=pvc-spark
+      spark.kubernetes.executor.volumes.persistentVolumeClaim.before-notebook.mount.path=/usr/local/bin/before-notebook.d
+      spark.kubernetes.executor.volumes.persistentVolumeClaim.before-notebook.options.claimName=pvc-before-notebook
+      spark.kubernetes.executor.volumes.persistentVolumeClaim.start-notebook.mount.path=/usr/local/bin/start-notebook.d
+      spark.kubernetes.executor.volumes.persistentVolumeClaim.start-notebook.options.claimName=pvc-start-notebook
+    sql.conf: |
+      spark.sql.execution.arrow.enabled=true
+    java.conf: |
+       spark.driver.extraJavaOptions -Dderby.system.home=/tmp/derby

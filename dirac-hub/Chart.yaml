@@ -1,0 +1,7 @@
+apiVersion: v1
+name: dirac-hub
+version: 0.0.1
+description: An extention of JupyterHub with Spark integration
+maintainers:
+  - name: Steven Stetzler
+    email: stevengs@uw.edu

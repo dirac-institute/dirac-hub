@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-conf
+data:
+  spark-{{ .Release.Name }}.conf: |-
+    spark.kubernetes.container.image={{ .Values.spark.image.name }}{{ if .Values.spark.image.tag }}:{{ .Values.spark.image.tag }}{{ end }}
+    spark.kubernetes.namespace={{ .Release.Namespace }}
+{{ range $name, $contents := index .Values "spark" "static-conf" }}
+{{ $name | indent 2 }}: |-
+{{ $contents | indent 4 }}
+{{ end }}
+  
+  spark-{{ .Release.Name }}.sh: |-
+    for file in $SPARK_EXTERNAL_CONF_DIR/*; do
+      case $file in
+        *.conf)
+          echo "$0: writing $file to spark-defaults.conf"
+          cat $file >> $SPARK_HOME/conf/spark-defaults.conf
+          echo "" >> $SPARK_HOME/conf/spark-defaults.conf
+          ;;
+        *)
+          echo "$0: ignoring $file"
+          ;;
+      esac
+    done
+{{ range $file_name, $contents := index .Values "spark" "start-scripts" }}
+{{ $file_name | indent 2 }}: |-
+{{ $contents | indent 4 }}
+{{ end }}

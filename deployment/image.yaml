@@ -1,0 +1,37 @@
+# File: image.yaml
+# Helm:
+# - before-notebook
+# - start-notebook
+# Edits the start up behavior of the notebook / spark executor container 
+
+start-notebook:
+  link.sh: |
+    if [ -d "/users" ]; then
+      if [ -L "users" ]; then
+        unlink users
+        ln -s /users users
+      else
+        ln -s /users users
+      fi
+    fi
+    if [ -d "/shared" ]; then
+      if [ -L "shared" ]; then
+        unlink shared
+        ln -s /shared shared
+      else
+        ln -s /shared shared
+      fi
+    fi
+  get-notebooks.sh: |
+    examples_folder=/home/jovyan/examples
+    if [ -d $examples_folder ]; then
+      echo "Removing folder $examples_folder"
+      rm -rf $examples_folder
+    fi
+    gitpuller https://github.com/dirac-institute/axs-examples.git master $examples_folder
+    printf "This directory will be erased on each start up of your server. Do not save files here!" >> $examples_folder/READ_ONLY_FOLDER
+  dirac.sh: |
+    dirac_folder=/usr/local/dirac-module
+    gitpuller https://github.com/dirac-institute/dirac-module.git master $dirac_folder
+    export PYTHONPATH=$dirac_folder:$PYTHONPATH
+

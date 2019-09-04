@@ -1,0 +1,59 @@
+# File: storage.yaml
+# Helm:
+# - efs
+# - jupyterhub.singleuser.storage
+# Contains configuration of the EFS file system and mounting of volumes, including spark configuration files and scripts
+
+efs:
+  enabled: true
+  subPath: "dirac-hub"
+  efsId: fs-502ef3fb
+  folders:
+  - pvcName: "pvc-users"
+    subPath: "homes"
+  - pvcName: "pvc-homes"
+    subPath: "homes"
+  - pvcName: "pvc-shared"
+    subPath: "shared"
+  - pvcName: "pvc-spark"
+    subPath: "spark-config"
+  - pvcName: "pvc-before-notebook"
+    subPath: "before-notebook"
+  - pvcName: "pvc-start-notebook"
+    subPath: "start-notebook"
+
+jupyterhub: 
+  singleuser:
+    storage:
+      extraVolumes:
+      - name: shared
+        persistentVolumeClaim:
+          claimName: pvc-shared
+      - name: users
+        persistentVolumeClaim:
+          claimName: pvc-users
+      - name: spark-config
+        persistentVolumeClaim:
+          claimName: pvc-spark
+      - name: before-notebook
+        persistentVolumeClaim:
+          claimName: pvc-before-notebook
+      - name: start-notebook
+        persistentVolumeClaim:
+          claimName: pvc-start-notebook
+      extraVolumeMounts:
+      - name: shared
+        mountPath: /shared
+      - name: spark-config
+        mountPath: /etc/config/spark
+      - name: users
+        mountPath: /users
+      - name: before-notebook
+        mountPath: /usr/local/bin/before-notebook.d
+      - name: start-notebook
+        mountPath: /usr/local/bin/start-notebook.d
+      type: static
+      # Use EFS for home directories for each user
+      static:
+        pvcName: pvc-homes
+        subPath: "{username}"

@@ -1,0 +1,56 @@
+{{- if .Values.efs.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: efs-utils-{{ randAlphaNum 5 | lower }}
+  annotations:        
+    "helm.sh/hook": post-install,post-upgrade
+spec:  
+  template:    
+    metadata:      
+      name: busybox      
+    spec:      
+      containers:      
+      - image: busybox        
+        command:        
+        - /bin/sh        
+        - -c        
+        - |
+          mkdir /mnt/efs/{{ $.Values.efs.subPath }}
+{{- range $folder, $options := .Values.efs.folders }}
+          mkdir /mnt/efs/{{ $.Values.efs.subPath }}/{{ $options.subPath }}
+{{- end }}
+          rm -rf /mnt/efs/{{ $.Values.efs.subPath }}/spark-config/*
+          cp -rL /etc/config/* /mnt/efs/{{ $.Values.efs.subPath }}/spark-config/.
+          rm -rf /mnt/efs/{{ $.Values.efs.subPath }}/before-notebook/*
+          cp -rL /etc/before-notebook/* /mnt/efs/{{ $.Values.efs.subPath }}/before-notebook/.
+          rm -rf /mnt/efs/{{ $.Values.efs.subPath }}/start-notebook/*
+          cp -rL /etc/start-notebook/* /mnt/efs/{{ $.Values.efs.subPath }}/start-notebook/.
+          chmod -R 777 /mnt/efs/{{ $.Values.efs.subPath }}/shared
+          exit 0
+        imagePullPolicy: IfNotPresent
+        name: busybox
+        volumeMounts:
+        - mountPath: "/mnt/efs"
+          name: nfs
+        - mountPath: "/etc/config"
+          name: spark-conf
+        - mountPath: "/etc/before-notebook"
+          name: before-notebook  
+        - mountPath: "/etc/start-notebook"
+          name: start-notebook  
+      restartPolicy: Never
+      volumes:
+        - name: nfs
+          persistentVolumeClaim:
+            claimName: nfs-root
+        - name: spark-conf
+          configMap:
+            name: spark-conf
+        - name: before-notebook
+          configMap:
+            name: before-notebook
+        - name: start-notebook
+          configMap:
+            name: start-notebook
+{{- end -}}

@@ -1,0 +1,92 @@
+# file: singleuser.yaml
+# Helm:
+# - jupyterhub.singluser
+# Contains configuration of the singleuser images
+# Seet storage.yaml for singleuser storage configuration
+jupyterhub:
+  singleuser:
+    defaultUrl: "/lab"
+    serviceAccountName: jupyterlab-serviceaccount
+    extraEnv:
+      PUBLIC_URL: "hub.dirac.astro.washington.edu"
+      CHOWN_HOME: "yes"
+      CHOWN_HOME_OPTS: "-R"
+      CHOWN_EXTRA: "/usr/local/axs"
+      #,/usr/local/spark-labextension,/opt/conda/share/jupyter/lab"
+      CHOWN_EXTRA_OPTS: "-R"
+      SPARK_EXTERNAL_CONF_DIR: "/etc/config/spark"
+    cloudMetadata:
+      enabled: true
+    image:
+      name: "808034228930.dkr.ecr.us-west-2.amazonaws.com/jupyter-axs"
+      tag: "demo-1567499600"
+    memory:
+      limit: 16G
+      guarantee: 16G
+    cpu:
+      limit: 4.0
+      guarantee: 3.890
+    profileList:
+    - display_name: "Standard Node"
+      description: "4 cores and 16 GB RAM"
+      kubespawner_override:
+        cpu_limit: 4.0
+        cpu_guarantee: 3.890
+        mem_limit: 15G
+        mem_guarantee: 15G
+    - display_name: "GPU Node"
+      description: "4 cores, 16 GB RAM, and GPU "
+      kubespawner_override:
+        cpu_limit: 4.0
+        cpu_guarantee: 3.890
+        mem_limit: 15G
+        mem_guarantee: 15G
+        #    - display_name: "Standard - 1"
+        #      description: "vCPU: 1, Memory: 1G"
+        #      kubespawner_override:
+        #        cpu_limit: 1
+        #        cpu_guarantee: 1
+        #        mem_limit: 1G
+        #        mem_guarantee: 1G
+        #    - display_name: "Standard - 2"
+        #      description: "vCPU: 1, Memory: 4G"
+        #      kubespawner_override:
+        #        cpu_limit: 1
+        #        cpu_guarantee: 1
+        #        mem_limit: 4G
+        #        mem_guarantee: 4G
+        #    - display_name: "Standard - 3"
+        #      description: "vCPU: 2, Memory: 1G"
+        #      kubespawner_override:
+        #        cpu_limit: 2
+        #        cpu_guarantee: 2
+        #        mem_limit: 1G
+        #        mem_guarantee: 1G
+        #    - display_name: "Medium - 1"
+        #      description: "vCPU: 2, Memory: 4G"
+        #      kubespawner_override:
+        #        cpu_limit: 2
+        #        cpu_guarantee: 2
+        #        mem_limit: 4G
+        #        mem_guarantee: 4G
+        #    - display_name: "Medium - 2"
+        #      description: "vCPU: 4, Memory: 4G"
+        #      kubespawner_override:
+        #        cpu_limit: 4
+        #        cpu_guarantee: 3.5
+        #        mem_limit: 4G
+        #        mem_guarantee: 4G
+        #    - display_name: "Medium - 3"
+        #      description: "vCPU: 2, Memory: 8G"
+        #      kubespawner_override:
+        #        cpu_limit: 2
+        #        cpu_guarantee: 2
+        #        mem_limit: 8G
+        #        mem_guarantee: 7.45G
+        #    - display_name: "Large"
+        #      description: "vCPU: 4, Memory: 8G"
+        #      kubespawner_override:
+        #        cpu_limit: 4
+        #        cpu_guarantee: 3.5
+        #        mem_limit: 8G
+        #        mem_guarantee: 7G
